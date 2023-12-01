@@ -3,11 +3,16 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"time"
 )
 
-var datas []QueryData
+var datas []one_data
+
+type one_data struct {
+	date time.Time
+	text string
+}
 
 type QueryData struct {
 	Text string `json:"text"`
@@ -27,26 +32,9 @@ func entry(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	fmt.Printf("Received: %+v\n", data)
-	datas = append(datas, data)
+	datas = append(datas, one_data{time.Now(), data.Text})
 
 	writer.Header().Set("Content-Type", "application/json")
-}
-
-func search(writer http.ResponseWriter, request *http.Request) {
-	body, err := ioutil.ReadAll(request.Body)
-	if err != nil {
-		http.Error(writer, "Error reading request body", http.StatusInternalServerError)
-		return
-	}
-	search_word := string(body)
-
-	for _, data := range datas {
-		if search_word == data.Text {
-			fmt.Fprintf(writer, "yes")
-		}
-	}
-
-	writer.Header().Set("Content-Type", "text/plain")
 }
 
 func show(writer http.ResponseWriter, request *http.Request) {
@@ -60,6 +48,6 @@ func show(writer http.ResponseWriter, request *http.Request) {
 func main() {
 	http.HandleFunc("/entry", entry)
 	http.HandleFunc("/show", show)
-	http.HandleFunc("/search", search)
+	//http.HandleFunc("/search", search)
 	http.ListenAndServe(":8080", nil)
 }
